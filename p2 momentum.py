@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.animation as animation
-
-rate = 1e-2
+# 本代码是一个最简单的线形回归问题，优化函数为momentum
+rate = 1e-2 # learning rate
 def da(y,y_p,x):
     return (y-y_p)*(-x)
 
@@ -11,16 +10,11 @@ def db(y,y_p):
     return (y-y_p)*(-1)
 
 def draw_hill(x,y):
-    loss = 0
     a = np.linspace(-10,10,100)
     print(a)
     b = np.linspace(-10,10,100)
     x = np.array(x)
     y = np.array(y)
-
-    fig = plt.figure(89)
-    ax = Axes3D(fig)
-    # a,b = np.meshgrid(a, b)
 
     allSSE = np.zeros(shape=(len(a),len(b)))
     for ai in range(0,len(a)):
@@ -32,13 +26,8 @@ def draw_hill(x,y):
             SSE = sum(tmp)/2
             allSSE[ai][bi] = SSE
 
-    print(allSSE)
     a,b = np.meshgrid(a, b)
 
-    #ax.scatter(a,b,allSSE)
-    ax.plot_surface(a, b, allSSE, rstride=1, cstride=1, cmap='rainbow')
-    plt.ion()
-    plt.draw()
     return [a,b,allSSE]
 # simulated data
 x = [30	,35,37,	59,	70,	76,	88,	100]
@@ -60,11 +49,16 @@ for i in range(0,len(x)):
 # 初始化a,b值
 a = -10
 b = 10
-fig4 = plt.figure(4)
-plt.ion()
+fig4 = plt.figure(4,figsize=(12,4))
+
+# plot bowl
+ax = fig4.add_subplot(1, 3, 1, projection='3d')
+ax.plot_surface(ha, hb, hallSSE, rstride=2, cstride=2, cmap='rainbow')
+plt.ion() # iteration on
 all_a = []
 all_b = []
 all_loss = []
+all_step = []
 for step in range(1,500):
     loss = 0
     all_da = 0
@@ -77,28 +71,32 @@ for step in range(1,500):
 
     a = a - rate*all_da
     b = b - rate*all_db
-    if step%10 == 0:
-        print("step: ",step," loss: " , loss)
 
     all_a.append(a)
     all_b.append(b)
     all_loss.append(loss)
+    all_step.append(step)
 
-    ax = Axes3D(fig4)
-    ax.scatter(all_a, all_b, all_loss, color='black')
-    ax.plot_surface(ha, hb, hallSSE, rstride=1, cstride=1, cmap='rainbow')
-    plt.ion()
-    plt.show()
+    # plot gradient descent point
+    ax.scatter(a, b, loss, color='black')
 
-    plt.figure(2)
+    # plot lines
+    plt.subplot(1,3,2)
     plt.plot(x,y)
     plt.plot(x,y,'o')
-    x_ = np.arange(0, 1, step=0.01)
+    x_ = np.linspace(0, 1, 2)
     y_draw = a * x_ + b
     plt.plot(x_,y_draw)
 
-    plt.ion()
-    plt.show()
-    plt.pause(0.01)
+    # plot losses
+    plt.subplot(1,3,3)
+    plt.plot(all_step,all_loss,color='orange')
+    plt.xlabel("step")
+    plt.ylabel("loss")
 
-
+    if step%10 == 0:
+        print("step: ", step, " loss: ", loss)
+        plt.show()
+        plt.pause(0.01)
+plt.show()
+plt.pause(99999999999)
