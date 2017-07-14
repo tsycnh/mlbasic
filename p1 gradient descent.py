@@ -48,11 +48,19 @@ for i in range(0,len(x)):
 
 # 初始化a,b值
 a = -10
-b = 10
-fig4 = plt.figure(4,figsize=(12,4))
-
+b = -10
+fig4 = plt.figure(4,figsize=(12,8))
+plt.subplot(2,2,2)
+plt.contourf(ha,hb,hallSSE,15,alpha=0.75,cmap=plt.cm.hot)
+C = plt.contour(ha,hb,hallSSE,15,colors='black')
+plt.clabel(C,inline=True)
+plt.xlabel('a')
+plt.ylabel('b')
+plt.xticks()
+plt.yticks()
+# plt.show()
 # plot bowl
-ax = fig4.add_subplot(1, 3, 1, projection='3d')
+ax = fig4.add_subplot(2, 2, 1, projection='3d')
 ax.plot_surface(ha, hb, hallSSE, rstride=2, cstride=2, cmap='rainbow')
 plt.ion() # iteration on
 all_a = []
@@ -80,8 +88,11 @@ for step in range(1,500):
     # plot gradient descent point
     ax.scatter(a, b, loss, color='black')
 
+    plt.subplot(2,2,2)
+    plt.scatter(a,b,loss,color='green')
+
     # plot lines
-    plt.subplot(1,3,2)
+    plt.subplot(2,2,3)
     plt.plot(x,y)
     plt.plot(x,y,'o')
     x_ = np.linspace(0, 1, 2)
@@ -89,7 +100,7 @@ for step in range(1,500):
     plt.plot(x_,y_draw)
 
     # plot losses
-    plt.subplot(1,3,3)
+    plt.subplot(2,2,4)
     plt.plot(all_step,all_loss,color='orange')
     plt.xlabel("step")
     plt.ylabel("loss")
