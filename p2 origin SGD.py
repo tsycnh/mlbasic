@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# 本代码是一个最简单的线形回归问题，优化函数为 momentum
-rate = 0.1 # learning rate
+import random
+# 本代码是一个最简单的线形回归问题，优化函数为经典的 SGD
+rate = 0.2 # learning rate
 def da(y,y_p,x):
     return (y-y_p)*(-x)
 
@@ -31,6 +32,14 @@ def draw_hill(x,y):
     a,b = np.meshgrid(a, b)
 
     return [a,b,allSSE]
+
+def shuffle_data(x,y):
+    # 随机打乱x，y的数据，并且保持x和y一一对应
+    seed = random.random()
+    random.seed(seed)
+    random.shuffle(x)
+    random.seed(seed)
+    random.shuffle(y)
 #  模拟数据
 x = [30	,35,37,	59,	70,	76,	88,	100]
 y = [1100,	1423,	1377,	1800,	2304,	2588,	3495,	4839]
@@ -51,8 +60,6 @@ hallSSE = hallSSE.T# 重要，将所有的losses做一个转置。原因是矩�
 a = 10.0
 b = -20.0
 fig = plt.figure(1, figsize=(12, 8))
-fig.suptitle('learning rate: %.2f method:momentum'%(rate), fontsize=15)
-
 
 # 绘制图1的曲面
 ax = fig.add_subplot(2, 2, 1, projection='3d')
@@ -75,54 +82,52 @@ all_loss = []
 all_step = []
 last_a = a
 last_b = b
-va = 0
-vb = 0
-gamma = 0.9
-for step in range(1,100):
+step = 1
+while step <= 500:
     loss = 0
     all_da = 0
     all_db = 0
+    shuffle_data(x,y)
     for i in range(0,len(x)):
         y_p = a*x[i] + b
-        loss = loss + (y[i] - y_p)*(y[i] - y_p)/2
-        all_da = all_da + da(y[i],y_p,x[i])
-        all_db = all_db + db(y[i],y_p)
+        loss = (y[i] - y_p)*(y[i] - y_p)/2
+        all_da = da(y[i],y_p,x[i])
+        all_db = db(y[i],y_p)
     #loss_ = calc_loss(a = a,b=b,x=np.array(x),y=np.array(y))
-    loss = loss/len(x)
+    #loss = loss/len(x)
 
-    # 绘制图1中的loss点
-    ax.scatter(a, b, loss, color='black')
-    # 绘制图2中的loss点
-    plt.subplot(2,2,2)
-    plt.scatter(a,b,s=5,color='blue')
-    plt.plot([last_a,a],[last_b,b],color='aqua')
-    # 绘制图3中的回归直线
-    plt.subplot(2, 2, 3)
-    plt.plot(x, y)
-    plt.plot(x, y, 'o')
-    x_ = np.linspace(0, 1, 2)
-    y_draw = a * x_ + b
-    plt.plot(x_, y_draw)
-    # 绘制图4的loss更新曲线
-    all_loss.append(loss)
-    all_step.append(step)
-    plt.subplot(2,2,4)
-    plt.plot(all_step,all_loss,color='orange')
-    plt.xlabel("step")
-    plt.ylabel("loss")
+        # 绘制图1中的loss点
+        ax.scatter(a, b, loss, color='black')
+        # 绘制图2中的loss点
+        plt.subplot(2, 2, 2)
+        plt.scatter(a,b,s=5,color='blue')
+        plt.plot([last_a,a],[last_b,b],color='aqua')
+        # 绘制图3中的回归直线
+        plt.subplot(2, 2, 3)
+        plt.plot(x, y)
+        plt.plot(x, y, 'o')
+        x_ = np.linspace(0, 1, 2)
+        y_draw = a * x_ + b
+        plt.plot(x_, y_draw)
+        # 绘制图4的loss更新曲线
+        all_loss.append(loss)
+        all_step.append(step)
+        plt.subplot(2,2,4)
+        plt.plot(all_step,all_loss,color='orange')
+        plt.xlabel("step")
+        plt.ylabel("loss")
 
+        last_a = a
+        last_b = b
 
-    # print('a = %.3f,b = %.3f' % (a,b))
-    last_a = a
-    last_b = b
-    va = gamma * va+ rate*all_da
-    vb = gamma * vb+ rate*all_db
-    a = a - va
-    b = b - vb
+        # 更新参数
+        a = a - rate*all_da
+        b = b - rate*all_db
 
-    if step%1 == 0:
-        print("step: ", step, " loss: ", loss)
-        plt.show()
-        plt.pause(0.01)
+        if step%1 == 0:
+            print("step: ", step, " loss: ", loss)
+            plt.show()
+            plt.pause(0.01)
+        step = step + 1
 plt.show()
 plt.pause(99999999999)

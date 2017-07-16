@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# 本代码是一个最简单的线形回归问题，优化函数为 momentum
+import random
+# 本代码是一个最简单的线形回归问题，优化函数为minibatch SGD
 rate = 0.1 # learning rate
 def da(y,y_p,x):
     return (y-y_p)*(-x)
@@ -31,6 +32,21 @@ def draw_hill(x,y):
     a,b = np.meshgrid(a, b)
 
     return [a,b,allSSE]
+
+
+def shuffle_data(x,y):
+    # 随机打乱x，y的数据，并且保持x和y一一对应
+    seed = random.random()
+    random.seed(seed)
+    random.shuffle(x)
+    random.seed(seed)
+    random.shuffle(y)
+
+def get_batch_data(x,y,batch=3):
+    shuffle_data(x,y)
+    x_new = x[0:batch]
+    y_new = y[0:batch]
+    return [x_new,y_new]
 #  模拟数据
 x = [30	,35,37,	59,	70,	76,	88,	100]
 y = [1100,	1423,	1377,	1800,	2304,	2588,	3495,	4839]
@@ -51,8 +67,7 @@ hallSSE = hallSSE.T# 重要，将所有的losses做一个转置。原因是矩�
 a = 10.0
 b = -20.0
 fig = plt.figure(1, figsize=(12, 8))
-fig.suptitle('learning rate: %.2f method:momentum'%(rate), fontsize=15)
-
+fig.suptitle('learning rate: %.2f method:momentum SGD'%(rate), fontsize=15)
 
 # 绘制图1的曲面
 ax = fig.add_subplot(2, 2, 1, projection='3d')
@@ -82,13 +97,15 @@ for step in range(1,100):
     loss = 0
     all_da = 0
     all_db = 0
-    for i in range(0,len(x)):
-        y_p = a*x[i] + b
-        loss = loss + (y[i] - y_p)*(y[i] - y_p)/2
-        all_da = all_da + da(y[i],y_p,x[i])
-        all_db = all_db + db(y[i],y_p)
+    shuffle_data(x,y)
+    [x_new,y_new] = get_batch_data(x,y,batch=4)
+    for i in range(0,len(x_new)):
+        y_p = a*x_new[i] + b
+        loss = loss + (y_new[i] - y_p)*(y_new[i] - y_p)/2
+        all_da = all_da + da(y_new[i],y_p,x_new[i])
+        all_db = all_db + db(y_new[i],y_p)
     #loss_ = calc_loss(a = a,b=b,x=np.array(x),y=np.array(y))
-    loss = loss/len(x)
+    loss = loss/len(x_new)
 
     # 绘制图1中的loss点
     ax.scatter(a, b, loss, color='black')
@@ -115,8 +132,9 @@ for step in range(1,100):
     # print('a = %.3f,b = %.3f' % (a,b))
     last_a = a
     last_b = b
-    va = gamma * va+ rate*all_da
-    vb = gamma * vb+ rate*all_db
+
+    va = gamma*va + rate*all_da
+    vb = gamma*vb + rate*all_db
     a = a - va
     b = b - vb
 
