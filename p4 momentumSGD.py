@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# 本代码是一个最简单的线形回归问题，优化函数为经典的gradient descent
+import random
+# 本代码是一个最简单的线形回归问题，优化函数为 momentum SGD
+
 rate = 1e-2 # learning rate
 def da(y,y_p,x):
     return (y-y_p)*(-x)
@@ -23,15 +25,29 @@ def draw_hill(x,y):
             b0 = b[bi]
             tmp = y - (a0*x + b0)
             tmp = tmp**2 # 对矩阵内的每一个元素平方
-            SSE = sum(tmp)/2
+            SSE = sum(tmp)/(2*len(x))
             allSSE[ai][bi] = SSE
 
     a,b = np.meshgrid(a, b)
 
     return [a,b,allSSE]
+
+def shuffle_data(x,y):
+    # 随机打乱x，y的数据，并且保持x和y一一对应
+    seed = random.random()
+    random.seed(seed)
+    random.shuffle(x)
+    random.seed(seed)
+    random.shuffle(y)
+
+def get_batch_data(x,y,batch=3):
+    shuffle_data(x,y)
+    x_new = x[0:batch]
+    y_new = y[0:batch]
+    return [x_new,y_new]
 # simulated data
-x = [30	,35,37,	59,	70,	76,	88,	100]
-y = [1100,	1423,	1377,	1800,	2304,	2588,	3495,	4839]
+x = [30	 ,   35,   37,	 59,   70,	 76,   88,	100]
+y = [1100, 1423, 1377, 1800, 2304, 2588, 3495, 4839]
 
 
 # 数据归一化
@@ -39,7 +55,6 @@ x_max = max(x)
 x_min = min(x)
 y_max = max(y)
 y_min = min(y)
-# x_mean = np.mean(x)
 for i in range(0,len(x)):
     x[i] = (x[i] - x_min)/(x_max - x_min)
     y[i] = (y[i] - y_min)/(y_max - y_min)
@@ -50,6 +65,8 @@ for i in range(0,len(x)):
 a = 10
 b = -20
 fig4 = plt.figure(4,figsize=(12,8))
+
+# 绘制等高线图
 plt.subplot(2,2,2)
 plt.contourf(ha,hb,hallSSE,15,alpha=0.75,cmap=plt.cm.hot)
 C = plt.contour(ha,hb,hallSSE,15,colors='black')
@@ -67,18 +84,31 @@ all_a = []
 all_b = []
 all_loss = []
 all_step = []
+last_va = 0 # momentum
+last_vb = 0
+gamma = 0.9
 for step in range(1,500):
     loss = 0
     all_da = 0
     all_db = 0
-    for i in range(0,len(x)):
-        y_p = a*x[i] + b
-        loss = loss + (y[i] - y_p)*(y[i] - y_p)/2
-        all_da = all_da + da(y[i],y_p,x[i])
-        all_db = all_db + db(y[i],y_p)
+    # mini-batch gd 的精华在此
+    batch_size = 4
+    [x_new, y_new] = get_batch_data(x,y,batch=batch_size)
+    for i in range(0,len(x_new)):
+        y_p = a*x_new[i] + b
+        loss = loss +(y_new[i] - y_p)*(y_new[i] - y_p)/2
 
-    a = a - rate*all_da
-    b = b - rate*all_db
+        all_da = all_da + da(y_new[i],y_p,x_new[i])
+        all_db = all_db + db(y_new[i],y_p)
+
+    va = gamma * last_va + rate*all_da
+    vb = gamma * last_vb + rate*all_db
+
+    a = a - va
+    b = b - vb
+
+    last_va = va
+    last_vb = vb
 
     all_a.append(a)
     all_b.append(b)
@@ -86,10 +116,11 @@ for step in range(1,500):
     all_step.append(step)
 
     # plot gradient descent point
-    ax.scatter(a, b, loss, color='black')
+    ax.scatter(a, b, loss/batch_size, color='black')
 
+    # plot on contour
     plt.subplot(2,2,2)
-    plt.scatter(a,b,loss,color='blue')
+    plt.scatter(a,b,loss/batch_size,color='blue',marker='.',linewidths=0.1)
 
     # plot lines
     plt.subplot(2,2,3)

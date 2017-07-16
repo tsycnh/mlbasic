@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import random
 # 本代码是一个最简单的线形回归问题，优化函数为 minbatch SGD
 
-rate = 1e-2 # learning rate
+rate = 0.01 # learning rate
 def da(y,y_p,x):
     return (y-y_p)*(-x)
 
