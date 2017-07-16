@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
-# 本代码是一个最简单的线形回归问题，优化函数为 momentum
+# 本代码是一个最简单的线形回归问题，优化函数为 NAG (Nesterov accelerated gradient),该优化函数基于momentum改进而来
 
 rate = 1e-2 # learning rate
 def da(y,y_p,x):
@@ -12,7 +12,7 @@ def db(y,y_p):
     return (y-y_p)*(-1)
 
 def draw_hill(x,y):
-    a = np.linspace(-5,18,100)
+    a = np.linspace(-10,15,100)
     print(a)
     b = np.linspace(-20,20,100)
     x = np.array(x)
@@ -68,8 +68,8 @@ fig4 = plt.figure(4,figsize=(12,8))
 
 # 绘制等高线图
 plt.subplot(2,2,2)
-plt.contourf(ha,hb,hallSSE,30,alpha=0.75,cmap=plt.cm.hot)
-C = plt.contour(ha,hb,hallSSE,10,colors='black')
+plt.contourf(ha,hb,hallSSE,15,alpha=0.75,cmap=plt.cm.hot)
+C = plt.contour(ha,hb,hallSSE,15,colors='black')
 plt.clabel(C,inline=True)
 plt.xlabel('a')
 plt.ylabel('b')
@@ -98,7 +98,7 @@ for step in range(1,500):
 
         all_da = all_da + da(y[i],y_p,x[i])
         all_db = all_db + db(y[i],y_p)
-    loss = loss/len(x)
+
     va = gamma * last_va + rate*all_da
     vb = gamma * last_vb + rate*all_db
 
@@ -114,11 +114,11 @@ for step in range(1,500):
     all_step.append(step)
 
     # plot gradient descent point
-    ax.scatter(a, b, loss, color='black')
+    ax.scatter(a, b, loss/len(x), color='black')
 
     # plot on contour
     plt.subplot(2,2,2)
-    plt.scatter(a,b,3,color='blue',marker='.')
+    plt.scatter(a,b,loss/len(x),color='blue',marker='.',linewidths=0.1)
 
     # plot lines
     plt.subplot(2,2,3)
@@ -134,9 +134,9 @@ for step in range(1,500):
     plt.xlabel("step")
     plt.ylabel("loss")
 
-    if step%1 == 0:
+    if step%10 == 0:
         print("step: ", step, " loss: ", loss)
         plt.show()
-        plt.pause(5)
+        plt.pause(0.01)
 plt.show()
 plt.pause(99999999999)
